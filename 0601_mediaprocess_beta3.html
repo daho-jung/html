@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var c1, ctx_c1;
+        var inFile, inImgArr;
+        var inWidth,inHeight, outWidth, outHeight;
+        var cHeight=0, cWidth=0;
+        var inImgData;
+        var chartFlag = false;
+        var outImgArr, outImgData;
+        function itit(){
+            c1 = document.getElementById('c1');
+            ctx_c1 = c1.getContext('2d');
+        }
+
+        
+
+        function readRawImage(){
+            inFile = document.getElementById('selectfile').files[0];
+
+            inWidth = inHeight = Math.sqrt(inFile.size);
+            outWidth = outHeight = Math.sqrt(inFile.size);
+            inImgArr = new Array(inHeight);
+            outImgArr = new Array(inHeight);
+            for(var i=0;i<inHeight;i++){
+                inImgArr[i] = new Array(inWidth);
+                outImgArr[i] = new Array(inWidth);
+            }
+            c1.width = inWidth;
+            c1.height = inHeight; 
+            var reader = new FileReader();
+            reader.readAsBinaryString(inFile);
+            reader.onload = function(){
+                var bin = reader.result;
+                for(var i=0;i<inHeight;i++){
+                    for(var j=0;j<inWidth;j++){
+                        var sPixel = (i*inHeight+j);
+                        var ePixel = (i*inHeight +j)+1;
+                        inImgArr[i][j] = bin.slice(sPixel,ePixel);
+                        outImgArr[i][j] = bin.slice(sPixel,ePixel);
+                    }
+                }
+                inImgData = ctx_c1.createImageData(inHeight,inWidth);
+                outImgData = ctx_c1.createImageData(inHeight,inWidth);
+                for(var i=0;i<inHeight;i++){
+                    for(var j=0;j<inWidth;j++){
+                        var charValue = inImgArr[i][j].charCodeAt(0);
+                        inImgData.data[(i*inWidth+j)*4+0] = charValue;
+                        inImgData.data[(i*inWidth+j)*4+1] = charValue;
+                        inImgData.data[(i*inWidth+j)*4+2] = charValue;
+                        inImgData.data[(i*inWidth+j)*4+3] = 255;
+                        outImgData.data[(i*inWidth+j)*4+0] = charValue;
+                        outImgData.data[(i*inWidth+j)*4+1] = charValue;
+                        outImgData.data[(i*inWidth+j)*4+2] = charValue;
+                        outImgData.data[(i*inWidth+j)*4+3] = 255;
+                    }
+                }
+                ctx_c1.putImageData(outImgData,0,0);
+            }
+        }
+
+        function addImage(){
+            var value = parseInt(prompt("input value","10"));
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){                        
+                    outImgData.data[(i*outWidth+j)*4+0] += value;
+                    outImgData.data[(i*outWidth+j)*4+1] += value;
+                    outImgData.data[(i*outWidth+j)*4+2] += value;
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+        function subImage(){
+            var value = parseInt(prompt("input value","10"));
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){                        
+                    outImgData.data[(i*outWidth+j)*4+0] -= value;
+                    outImgData.data[(i*outWidth+j)*4+1] -= value;
+                    outImgData.data[(i*outWidth+j)*4+2] -= value;
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function leftmirr(){
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            var tarr = new Array(outHeight);
+
+            for(var i=0;i<outHeight;i++){
+                tarr[i] = new Array(outWidth);
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[i][outWidth-j-1].charCodeAt(0);
+                    tarr[i][j] = outImgArr[i][outWidth-j-1];
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){  
+                    outImgArr[i][j] = tarr[i][j];
+                }
+            }
+
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function upmirr(){
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            var tarr = new Array(outHeight);
+
+            for(var i=0;i<outHeight;i++){
+                tarr[i] = new Array(outWidth);
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[outHeight-i-1][j].charCodeAt(0);
+                    tarr[i][j] = outImgArr[outHeight-i-1][j];
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){  
+                    outImgArr[i][j] = tarr[i][j];
+                }
+            }
+
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+        function b_and_w(){
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if(charValue > 128)
+                        charValue = 255;
+                    else
+                        charValue = 0;
+
+                    // for(var k=0;k<8;k++){
+                    //     var x = Math.floor(outHeight/8); //x
+                    //     if(charValue >= x*k && charValue < (k+1)*x)
+                    //         charValue = x*k;
+                    // }
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+        function b_and_w_avg(){
+            var avg=0;
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    avg += charValue;
+                }
+            }
+            avg = Math.round(avg/(outHeight*outWidth));
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if(charValue > avg)
+                        charValue = 255;
+                    else
+                        charValue = 0;
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+        function shrink(){
+            var scale = parseInt(prompt("축소 배율(짝수)", "2"));
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            outWidth = outWidth/scale;
+            outHeight = outHeight/scale;
+            var hwidth = Math.floor(outWidth);
+            var hheight = Math.floor(outHeight);
+            c1.width = outWidth;
+            c1.height = outHeight;
+            var tarr = new Array(hheight);            
+            outImgData = ctx_c1.createImageData(outHeight,outWidth);
+
+            for(var i=0;i<hheight;i++){
+                tarr[i] = new Array(hwidth);
+                    for(var j=0;j<hwidth;j++){
+                        var charValue = outImgArr[i*scale][j*scale].charCodeAt(0);
+                        tarr[i][j] = outImgArr[i*scale][j*scale];
+                        outImgData.data[(i*hwidth+j)*4+0] = charValue;
+                        outImgData.data[(i*hwidth+j)*4+1] = charValue;
+                        outImgData.data[(i*hwidth+j)*4+2] = charValue;
+                        outImgData.data[(i*hwidth+j)*4+3] = 255;
+                    }
+                }
+                outImgArr = tarr;
+                ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function emph(){
+            var scale = parseInt(prompt("확대 배율", "2"));
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            outWidth = outWidth*scale;
+            outHeight = outHeight*scale;
+            c1.width = outWidth;
+            c1.height = outHeight;
+            var tarr = new Array(outHeight);
+            var vi,vj;
+            outImgData = ctx_c1.createImageData(outHeight,outWidth);
+                for(var i=0;i<outHeight;i++){
+                    tarr[i] = new Array(outWidth);
+                    for(var j=0;j<outWidth;j++){
+                        vi = Math.floor(i/scale);
+                        vj = Math.floor(j/scale);
+                        var charValue = outImgArr[vi][vj].charCodeAt(0);
+                        tarr[i][j] = outImgArr[vi][vj];
+                        outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                        outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                        outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                        outImgData.data[(i*outWidth+j)*4+3] = 255;
+                    }
+                }
+                outImgArr = tarr;
+                ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function rot(){
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            var tarr = new Array(outHeight);
+            for(var i=0;i<outHeight;i++){
+                tarr[i] = new Array(outWidth);
+                for(var j=0;j<outWidth;j++){  
+                    var charValue = outImgArr[outHeight-j-1][i].charCodeAt(0);
+                    tarr[i][j] = outImgArr[outHeight-j-1][i];
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            outImgArr = tarr;
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function retToOrg(){
+            
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            c1.width = inWidth;
+            c1.height = inHeight;
+            outHeight = inHeight;
+            outWidth = inWidth;
+            
+            outImgData = ctx_c1.createImageData(outHeight,outWidth);
+            tarr = new Array(inHeight);
+            for(var i=0;i<inHeight;i++){
+                tarr[i] = new Array(inWidth);
+                for(var j=0;j<inWidth;j++){
+                    tarr[i][j] = inImgArr[i][j];
+                    var charValue = inImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;
+                }
+            }
+            outImgArr = tarr;            
+            ctx_c1.putImageData(outImgData,0,0);
+            chartFlag = false;
+        }
+
+        function his_stretch(){
+            var low=outImgArr[0][0].charCodeAt(0), hi=outImgArr[0][0].charCodeAt(0);
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            //out = (in-low)/(hi-low)*255
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var tval =  outImgArr[i][j].charCodeAt(0);
+                    if(tval > hi)
+                        hi = tval;
+                    if(tval < low)
+                        low = tval;
+                }
+            }
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i*outWidth+j)*4+0] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+1] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+2] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function end_in(){
+            var low=outImgArr[0][0].charCodeAt(0), hi=outImgArr[0][0].charCodeAt(0);
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var tval =  outImgArr[i][j].charCodeAt(0);
+                    if(tval > hi)
+                        hi = tval;
+                    if(tval < low)
+                        low = tval;
+                }
+            }
+            low += 50;
+            hi -= 50;
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if(charValue > 255)
+                        charValue = 255
+                    else if(charValue < 0)
+                        charValue =0;
+                    outImgData.data[(i*outWidth+j)*4+0] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+1] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+2] = (charValue-low)*255/(hi-low);
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+        
+        function normalize(){
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            // ns = s*(1/픽셀수)*화소 최대 밝기 -> s*(1/i*j)*255
+            var his = new Array(256), sum = new Array(256);
+            for(var i=0;i<his.length;i++){
+                his[i] = 0;
+                sum[i] = 0;
+            }
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    his[charValue] += 1;
+                }
+            }
+            for(var i=0;i<sum.length;i++){
+                if(i != 0)
+                    sum[i] += his[i]+sum[i-1];
+                else
+                    sum[i] = his[i];
+            }
+
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    var newVal = sum[charValue]*255*(1/(outHeight*outWidth));
+                    newVal = Math.round(newVal);
+                    outImgData.data[(i*outWidth+j)*4+0] = newVal;
+                    outImgData.data[(i*outWidth+j)*4+1] = newVal;
+                    outImgData.data[(i*outWidth+j)*4+2] = newVal;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+        }
+
+        function drawHisChart(){
+            chartFlag = true;
+            ctx_c1.clearRect(0,0,outWidth,outHeight);
+            var his = new Array(256);
+            var hmax=0;
+            for(var i=0;i<his.length;i++){
+                his[i] = 0;
+            }
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    his[charValue] += 1;
+                    if(hmax < his[charValue])
+                        hmax = his[charValue];
+                }
+            }
+            cWidth = his.length*2;
+            cHeight = his.length*2;
+            c1.width = cWidth;
+            c1.height = cHeight;
+            ctx_c1.beginPath();
+            ctx_c1.fillStyle = "yellow";
+            his.forEach( (data, idx) =>{
+                var minusVal = 1-(data / hmax);
+                ctx_c1.fillRect(idx*2,cHeight*minusVal,2,cHeight);
+            });
+        }
+
+        function clearHisChart(){
+            if(chartFlag == false){
+                alert("No chart!");
+                return;
+            }
+            ctx_c1.clearRect(0,0,cWidth,cHeight);
+            c1.width = outWidth;
+            c1.height = outHeight;
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){ 
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    
+                    outImgData.data[(i*outWidth+j)*4+0] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+1] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+2] = charValue;
+                    outImgData.data[(i*outWidth+j)*4+3] = 255;    
+                }
+            }
+            ctx_c1.putImageData(outImgData,0,0);
+            chartFlag = false;
+        }
+        function imgProcess(selectNum){
+            var snum = parseInt(selectNum);
+            switch(snum){
+                case 11 : retToOrg();
+                    break;
+                case 12 : addImage();
+                    break;
+                case 13 : subImage();
+                    break;
+                case 14 : b_and_w();
+                    break;
+                case 21 :   leftmirr();
+                    break;
+                case 22 :   upmirr();
+                    break;
+                case 23 :   emph();
+                    break;
+                case 24 :   shrink();
+                    break;
+                case 25 :   rot();
+                    break;
+                case 41 :   his_stretch();
+                    break;
+                case 42 : end_in();
+                    break;
+                case 43 :   normalize();
+                    break;
+                case 44 :   drawHisChart();
+                    break;
+                case 45 : clearHisChart();
+
+            }
+        }
+    </script>
+    <style>
+        body{height: 100%;
+        }
+        #view{
+            -webkit-perspective: 1000;
+            perspective: 1000px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            background-image: linear-gradient(
+            bottom,
+            rgb(69, 132, 180) 28%,
+            rgb(31, 71, 120) 64%
+            );
+            background-image: -o-linear-gradient(
+            bottom,
+            rgb(69, 132, 180) 28%,
+            rgb(31, 71, 120) 64%
+            );
+            background-image: -moz-linear-gradient(
+            bottom,
+            rgb(69, 132, 180) 28%,
+            rgb(31, 71, 120) 64%
+            );
+            background-image: -webkit-linear-gradient(
+            bottom,
+            rgb(69, 132, 180) 28%,
+            rgb(31, 71, 120) 64%
+            );
+            background-image: -ms-linear-gradient(
+            bottom,
+            rgb(69, 132, 180) 28%,
+            rgb(31, 71, 120) 64%
+            );
+
+            background-image: -webkit-gradient(
+            linear,
+            left bottom,
+            left top,
+            color-stop(0.28, rgb(100, 188, 255)),
+            color-stop(0.64, rgb(49, 111, 187))
+            );
+        }
+
+        
+        #content{
+            width: auto;
+            height: auto;
+            float: left;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+            color : white;
+        }
+        canvas{
+            float: left;
+            
+        }
+        .tab{white-space: pre;}
+        .button{
+            border: 1px solid skyblue;
+            background-color: rgba(0,0,0,0);
+            color: skyblue;
+            padding: 5px;
+        }
+        .button:hover{
+            color: white;
+            background-color: skyblue;
+        }
+        .button2{
+            border: 1px solid black;
+            background-color: rgba(0, 0, 0, 0);
+            color: black;
+            font-size: large;
+        }
+    </style>
+</head>
+<body onload="itit()">
+   <form>
+       <div id="view">
+        <div id="content">
+            <input class='button2' type='file' id='selectfile' onchange='readRawImage()'/>
+            <br><br>
+            <center>
+                <label>영상처리</label>
+                <select id ='selbox' name="imgAlgo" onchange="imgProcess(this.value)">
+                    <option value=0> select option</option>
+                    <optgroup label = "화소 점 처리">
+                        <option value=11>original file</option>
+                        <option value=12>밝게하기</option>
+                        <option value=13>어둡게하기</option>
+                        <option value=14>흑백</option>
+                    </optgroup>
+                    <optgroup label = "기하학 처리">
+                        <option value=21>좌우반전</option>
+                        <option value=22>상하반전</option>
+                        <option value=23>확대</option>
+                        <option value=24>축소</option>
+                        <option value=25>회전</option>
+                    </optgroup>
+                    <optgroup label = "히스토그램">
+                        <option value=41>히스토그램 스트래칭</option>
+                        <option value=42>앤드-인 탐색</option>
+                        <option value=43>평활화</option>
+                        <option value=44>히스토그램 차트</option>
+                        <option value=45>차트지우기</option>
+                    </optgroup>
+                </select>
+            </center>
+
+            
+            <!-- <span class="tab">
+                <input class='button' type='button' id='btn' value='+imgval' onclick='addImage()'/>&#9;<input class='button' type='button' id='btn' value='-imgval' onclick='subImage()'/>
+            </span>    
+            <span class="tab">
+                <input class='button' type='button' id='btn' value='leftmir' onclick='leftmirr()'/>&#9;<input class='button' type='button' id='btn' value='upmir' onclick='upmirr()'/>
+            </span>
+            <span class="tab">
+                <input class='button' type='button' id='btn' value='b&w' onclick='b_and_w()'/> &#9;<input class='button' type='button' id='btn' value='b&w_avg' onclick='b_and_w_avg()'/>
+            </span>
+            <span class="tab">
+                <input class='button' type='button' id='btn' value='shrink' onclick='shrink()'/>&#9;<input class='button' type='button' id='btn' value='emph' onclick='emph()'/>
+            </span>
+            <span class="tab">
+                <input class='button' type='button' id='btn' value='rotate' onclick='rot()'/>&#9;<input class='button' type='button' id='btn' value='return to origin' onclick='retToOrg()'/>
+            </span> -->
+        </div>
+        <canvas id='c1'></canvas>
+    </div>
+    </form>
+    
+</body>
+</html>
