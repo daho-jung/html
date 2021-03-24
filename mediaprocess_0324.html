@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var c1, ctx_c1;
+        var inFile, inImgArr;
+        var inWidth, inHeight, outWidth, outHeight;
+        var cHeight = 0, cWidth = 0;
+        var inImgData;
+        var chartFlag = false;
+        var mask;
+        var outImgArr, outImgData;
+        function itit() {
+            c1 = document.getElementById('c1');
+            ctx_c1 = c1.getContext('2d');
+        }
+
+        function readRawImage() {
+            inFile = document.getElementById('selectfile').files[0];
+
+            inWidth = inHeight = Math.sqrt(inFile.size);
+            outWidth = outHeight = Math.sqrt(inFile.size);
+            inImgArr = new Array(inHeight);
+            outImgArr = new Array(inHeight);
+            for (var i = 0; i < inHeight; i++) {
+                inImgArr[i] = new Array(inWidth);
+                outImgArr[i] = new Array(inWidth);
+            }
+            c1.width = inWidth;
+            c1.height = inHeight;
+            var reader = new FileReader();
+            reader.readAsBinaryString(inFile);
+            reader.onload = function () {
+                var bin = reader.result;
+                for (var i = 0; i < inHeight; i++) {
+                    for (var j = 0; j < inWidth; j++) {
+                        var sPixel = (i * inHeight + j);
+                        var ePixel = (i * inHeight + j) + 1;
+                        inImgArr[i][j] = bin.slice(sPixel, ePixel);
+                        outImgArr[i][j] = bin.slice(sPixel, ePixel);
+                    }
+                }
+                inImgData = ctx_c1.createImageData(inHeight, inWidth);
+                outImgData = ctx_c1.createImageData(inHeight, inWidth);
+                for (var i = 0; i < inHeight; i++) {
+                    for (var j = 0; j < inWidth; j++) {
+                        var charValue = inImgArr[i][j].charCodeAt(0);
+                        inImgData.data[(i * inWidth + j) * 4 + 0] = charValue;
+                        inImgData.data[(i * inWidth + j) * 4 + 1] = charValue;
+                        inImgData.data[(i * inWidth + j) * 4 + 2] = charValue;
+                        inImgData.data[(i * inWidth + j) * 4 + 3] = 255;
+                        outImgData.data[(i * inWidth + j) * 4 + 0] = charValue;
+                        outImgData.data[(i * inWidth + j) * 4 + 1] = charValue;
+                        outImgData.data[(i * inWidth + j) * 4 + 2] = charValue;
+                        outImgData.data[(i * inWidth + j) * 4 + 3] = 255;
+                    }
+                }
+                ctx_c1.putImageData(outImgData, 0, 0);
+            }
+        }
+
+        function addImage() {
+            var value = parseInt(prompt("input value", "10"));
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    outImgData.data[(i * outWidth + j) * 4 + 0] += value;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] += value;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] += value;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function subImage() {
+            var value = parseInt(prompt("input value", "10"));
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    outImgData.data[(i * outWidth + j) * 4 + 0] -= value;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] -= value;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] -= value;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function leftmirr() {
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var tarr = new Array(outHeight);
+
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][outWidth - j - 1].charCodeAt(0);
+                    tarr[i][j] = outImgArr[i][outWidth - j - 1];
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    outImgArr[i][j] = tarr[i][j];
+                }
+            }
+
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        
+        function upmirr() {
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var tarr = new Array(outHeight);
+
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[outHeight - i - 1][j].charCodeAt(0);
+                    tarr[i][j] = outImgArr[outHeight - i - 1][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    outImgArr[i][j] = tarr[i][j];
+                }
+            }
+
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function b_and_w() {
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if (charValue > 128)
+                        charValue = 255;
+                    else
+                        charValue = 0;
+
+                    // for(var k=0;k<8;k++){
+                    //     var x = Math.floor(outHeight/8); //x
+                    //     if(charValue >= x*k && charValue < (k+1)*x)
+                    //         charValue = x*k;
+                    // }
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function b_and_w_avg() {
+            var avg = 0;
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    avg += charValue;
+                }
+            }
+            avg = Math.round(avg / (outHeight * outWidth));
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if (charValue > avg)
+                        charValue = 255;
+                    else
+                        charValue = 0;
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function shrink() {
+            var scale = parseInt(prompt("축소 배율(짝수)", "2"));
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            outWidth = outWidth / scale;
+            outHeight = outHeight / scale;
+            var hwidth = Math.floor(outWidth);
+            var hheight = Math.floor(outHeight);
+            c1.width = outWidth;
+            c1.height = outHeight;
+            var tarr = new Array(hheight);
+            outImgData = ctx_c1.createImageData(outHeight, outWidth);
+
+            for (var i = 0; i < hheight; i++) {
+                tarr[i] = new Array(hwidth);
+                for (var j = 0; j < hwidth; j++) {
+                    var charValue = outImgArr[i * scale][j * scale].charCodeAt(0);
+                    tarr[i][j] = outImgArr[i * scale][j * scale];
+                    outImgData.data[(i * hwidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * hwidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * hwidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * hwidth + j) * 4 + 3] = 255;
+                }
+            }
+            outImgArr = tarr;
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function emph() {
+            var scale = parseInt(prompt("확대 배율", "2"));
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            outWidth = outWidth * scale;
+            outHeight = outHeight * scale;
+            c1.width = outWidth;
+            c1.height = outHeight;
+            var tarr = new Array(outHeight);
+            var vi, vj;
+            outImgData = ctx_c1.createImageData(outHeight, outWidth);
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    vi = Math.floor(i / scale);
+                    vj = Math.floor(j / scale);
+                    var charValue = outImgArr[vi][vj].charCodeAt(0);
+                    tarr[i][j] = outImgArr[vi][vj];
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            outImgArr = tarr;
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function rot() {
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var tarr = new Array(outHeight);
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[outHeight - j - 1][i].charCodeAt(0);
+                    tarr[i][j] = outImgArr[outHeight - j - 1][i];
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            outImgArr = tarr;
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function rotByDeg(){
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var rad = parseFloat(prompt("rotate degree :",0));
+            rad = -1*rad*Math.PI/180.0;
+            var xd,yd;
+            var tarr = new Array(outHeight);
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    tarr[i][j] =String.fromCharCode(0);
+                }
+            }
+            cx = outHeight/2;
+            cy = outWidth/2;
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    xd = parseInt(Math.cos(rad) * (i-cx) - Math.sin(rad) * (j-cy) + cx);
+                    yd = parseInt(Math.sin(rad) * (i-cx) + Math.cos(rad) * (j-cy) + cy);
+
+                    if((0<=xd && xd<outHeight) && (0<=yd && yd<outWidth)){
+                        tarr[i][j] = outImgArr[xd][yd];
+                    }
+                    
+                }
+            }
+            outImgArr = tarr;
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function rotCenter(){
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var rad = parseFloat(prompt("rotate degree :",0));
+            rad = rad*Math.PI/180.0;
+            var oldheight,oldwidth;
+            var alpha = Math.atan2(outWidth,outHeight); //alpha = radian value
+            var beta = Math.sqrt(outHeight*outHeight + outWidth*outWidth);
+            var tempheight = parseInt(beta*Math.abs(Math.sin(rad+alpha)));
+            var tempwidth = parseInt(Math.abs(outHeight*Math.sin(rad)+outWidth*Math.cos(rad)));
+            // var tempheight = parseInt(outHeight*Math.cos(rad) + outWidth*Math.sin(rad));
+            // var tempwidth = parseInt(outHeight*Math.sin(rad) + outWidth*Math.cos(rad));
+            var th = outHeight,tw=outWidth; //th, tw = 회전하기 전의 높이/너비
+            outWidth = tempwidth;
+            outHeight = tempheight;
+            var cnewheight = parseInt(outHeight/2), cNewWidth=parseInt(outWidth/2)
+            c1.width = outWidth;
+            c1.height = outHeight;
+            outImgData = ctx_c1.createImageData(outWidth, outHeight);
+            var tarr = new Array(outHeight);    //새로운 이미지 배열 초기화
+            for (var i = 0; i < outHeight; i++) {
+                tarr[i] = new Array(outWidth);
+                for (var j = 0; j < outWidth; j++) {
+                    tarr[i][j] =String.fromCharCode(255);
+                }
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    // var h= parseInt((i-cnewheight)*Math.cos(rad)-(j-cNewWidth)*Math.sin(rad)+oldheight/2);
+                    // var w= parseInt((i-cnewheight)*Math.cos(rad)+(j-cNewWidth)*Math.sin(rad)+oldwidth/2);
+                    //안됨
+                    oldheight = parseInt(Math.cos(rad) * (i-cnewheight) - Math.sin(rad) * (j-cNewWidth) + th/2);
+                    oldwidth = parseInt(Math.sin(rad) * (i-cnewheight) + Math.cos(rad) * (j-cNewWidth) + tw/2);
+                    //됨
+                    //같은수식인데 왜?
+                    
+                    if((0<=oldheight && oldheight<th) && (0<=oldwidth && oldwidth<tw)){
+                        tarr[i][j] = outImgArr[oldheight][oldwidth];
+                    }
+                    
+                }
+            }
+            outImgArr = tarr;
+            for(var i=0;i<outHeight;i++){
+                for(var j=0;j<outWidth;j++){
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+
+        }
+        function retToOrg() {
+
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            c1.width = inWidth;
+            c1.height = inHeight;
+            outHeight = inHeight;
+            outWidth = inWidth;
+
+            outImgData = ctx_c1.createImageData(outHeight, outWidth);
+            tarr = new Array(inHeight);
+            for (var i = 0; i < inHeight; i++) {
+                tarr[i] = new Array(inWidth);
+                for (var j = 0; j < inWidth; j++) {
+                    tarr[i][j] = inImgArr[i][j];
+                    var charValue = inImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            outImgArr = tarr;
+            ctx_c1.putImageData(outImgData, 0, 0);
+            chartFlag = false;
+        }
+
+        function his_stretch() {
+            var low = outImgArr[0][0].charCodeAt(0), hi = outImgArr[0][0].charCodeAt(0);
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            //out = (in-low)/(hi-low)*255
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var tval = outImgArr[i][j].charCodeAt(0);
+                    if (tval > hi)
+                        hi = tval;
+                    if (tval < low)
+                        low = tval;
+                }
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function end_in() {
+            var low = outImgArr[0][0].charCodeAt(0), hi = outImgArr[0][0].charCodeAt(0);
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var tval = outImgArr[i][j].charCodeAt(0);
+                    if (tval > hi)
+                        hi = tval;
+                    if (tval < low)
+                        low = tval;
+                }
+            }
+            low += 50;
+            hi -= 50;
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    if (charValue > 255)
+                        charValue = 255
+                    else if (charValue < 0)
+                        charValue = 0;
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = (charValue - low) * 255 / (hi - low);
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function normalize() {
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            // ns = s*(1/픽셀수)*화소 최대 밝기 -> s*(1/i*j)*255
+            var his = new Array(256), sum = new Array(256);
+            for (var i = 0; i < his.length; i++) {
+                his[i] = 0;
+                sum[i] = 0;
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    his[charValue] += 1;
+                }
+            }
+            for (var i = 0; i < sum.length; i++) {
+                if (i != 0)
+                    sum[i] += his[i] + sum[i - 1];
+                else
+                    sum[i] = his[i];
+            }
+
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    var newVal = sum[charValue] * 255 * (1 / (outHeight * outWidth));
+                    newVal = Math.round(newVal);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = newVal;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = newVal;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = newVal;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+
+        function drawHisChart() {
+            chartFlag = true;
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            var his = new Array(256);
+            var hmax = 0;
+            for (var i = 0; i < his.length; i++) {
+                his[i] = 0;
+            }
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+                    his[charValue] += 1;
+                    if (hmax < his[charValue])
+                        hmax = his[charValue];
+                }
+            }
+            cWidth = his.length * 2;
+            cHeight = his.length * 2;
+            c1.width = cWidth;
+            c1.height = cHeight;
+            ctx_c1.beginPath();
+            ctx_c1.fillStyle = "yellow";
+            his.forEach((data, idx) => {
+                var minusVal = 1 - (data / hmax);
+                ctx_c1.fillRect(idx * 2, cHeight * minusVal, 2, cHeight);
+            });
+        }
+
+        function clearHisChart() {
+            if (chartFlag == false) {
+                alert("No chart!");
+                return;
+            }
+            ctx_c1.clearRect(0, 0, cWidth, cHeight);
+            c1.width = outWidth;
+            c1.height = outHeight;
+            for (var i = 0; i < outHeight; i++) {
+                for (var j = 0; j < outWidth; j++) {
+                    var charValue = outImgArr[i][j].charCodeAt(0);
+
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = charValue;
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+            chartFlag = false;
+        }
+        function maskConst(){
+            var size = mask.length;
+            var half = Math.floor(size/2);
+            if(half == 0)
+                half += 1;
+            var theight = outHeight+half*2, twidth = outWidth+half*2;
+            var tempout = new Array(theight);   //int array[][]
+            var tarr = new Array(outHeight);
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            outImgData = ctx_c1.createImageData(outHeight, outWidth);
+            for(var i=0;i<theight;i++){ //0 ~ half ~ half+height ~ height+half*2-1
+                tempout[i] = new Array(twidth);
+                for(var j=0;j<twidth;j++){
+                    if(i < half){   //i = 0~half-1
+                        if(j < half){
+                            tempout[i][j] = outImgArr[0][0].charCodeAt(0);
+                        }else if(j < outWidth+half){
+                            tempout[i][j] = outImgArr[0][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[0][outWidth-1].charCodeAt(0);
+                        }
+                    }else if(i < half+outHeight){   //i = half~half+outheight-1
+                        if(j<half){
+                            tempout[i][j] = outImgArr[i-half][0].charCodeAt(0);
+                        }else if(j<outWidth+half){
+                            tempout[i][j] = outImgArr[i-half][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[i-half][outWidth-1].charCodeAt(0);
+                        }
+                    }
+                    else{
+                        if(j<half){
+                            tempout[i][j] = outImgArr[outHeight-1][0].charCodeAt(0);
+                        }else if(j<outWidth+half){
+                            tempout[i][j] = outImgArr[outHeight-1][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[outHeight-1][outWidth-1].charCodeAt(0);
+                        }
+                    }
+                }
+            }
+            for(var i=0;i<outHeight;i++){
+                tarr[i] = new Array(outWidth);
+                for(var j=0;j<outWidth;j++){
+                    tarr[i][j] = calcMasking(i,j,inImgArr,tempout,mask);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function setMaskCustom(){
+            var tempv, insize;
+            insize = prompt("mask size?(odd only)",1);
+            tempv = new Array(insize);
+            for(var i=0;i<insize;i++){
+                tempv[i] = new Array(insize);
+                for(var j=0;j<insize;j++){
+                    tempv[i][j] = prompt(i+", "+j+" mask value ?", 1);
+                    tempv[i][j] = parseFloat(tempv[i][j]);
+                }
+            }
+            mask = tempv;
+            maskConst();
+        }
+        function setMask(){
+            var vals = document.getElementsByClassName('inval');
+            var insize = Math.sqrt(vals.length);
+            var tmask = new Array(insize);
+            var cntmask=0;
+            for(var i=0;i<insize;i++){
+                tmask[i] = new Array(insize);
+                for(var j=0;j<insize;j++){
+                    tmask[i][j] = parseInt(vals[cntmask].value);
+                    vals[cntmask].value;
+                    cntmask++;
+                }
+            }
+            mask = tmask;
+            maskConst();
+        }
+        function m2(){
+            var insize = prompt("size?",1);
+            var thtml="<table border='1'>";
+            for(var i=0;i<insize;i++){
+                thtml+= "<tr>";
+                for(var j=0;j<insize;j++){
+                    thtml+= "<td> <input type='text' class='inval'></td>";
+                }
+                thtml+="</tr>";
+            }
+            thtml+="</table><br>";
+            tdiv.innerHTML=thtml+tdiv.innerHTML;
+        }
+        function setEmboMask(){
+            mask = [
+                [-1,0,0],[0,0,0],[0,0,1]
+            ];
+            maskConst();
+        }
+        function setblurMask(){
+            mask = [
+                [1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]
+            ];
+            maskConst();
+        }
+        function setSobelMask(){
+            mask = [
+                [-1,-2,-1],[0,0,0],[1,2,1]
+            ];
+            maskConst();
+        }
+        function setSharpMask(){
+            mask = [
+                [-1,-1,-1],[-1,9,-1],[-1,-1,-1]
+            ];
+            maskConst();
+        }
+        function setSubMask(){
+            mask = [
+                [1,1,1],[1,1,1],[1,1,1]
+            ];
+            var size = mask.length;
+            var half = Math.floor(size/2);
+            var theight = outHeight+half*2, twidth = outWidth+half*2;
+            var tempout = new Array(theight);   //int array[][]
+            var tarr = new Array(outHeight);
+            ctx_c1.clearRect(0, 0, outWidth, outHeight);
+            outImgData = ctx_c1.createImageData(outHeight, outWidth);
+            for(var i=0;i<theight;i++){ //0 ~ half ~ half+height ~ height+half*2-1
+                tempout[i] = new Array(twidth);
+                for(var j=0;j<twidth;j++){
+                    if(i < half){   //i = 0~half-1
+                        if(j < half){
+                            tempout[i][j] = outImgArr[0][0].charCodeAt(0);
+                        }else if(j < outWidth+half){
+                            tempout[i][j] = outImgArr[0][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[0][outWidth-1].charCodeAt(0);
+                        }
+                    }else if(i < half+outHeight){   //i = half~half+outheight-1
+                        if(j<half){
+                            tempout[i][j] = outImgArr[i-half][0].charCodeAt(0);
+                        }else if(j<outWidth+half){
+                            tempout[i][j] = outImgArr[i-half][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[i-half][outWidth-1].charCodeAt(0);
+                        }
+                    }
+                    else{
+                        if(j<half){
+                            tempout[i][j] = outImgArr[outHeight-1][0].charCodeAt(0);
+                        }else if(j<outWidth+half){
+                            tempout[i][j] = outImgArr[outHeight-1][j-half].charCodeAt(0);
+                        }else{
+                            tempout[i][j] = outImgArr[outHeight-1][outWidth-1].charCodeAt(0);
+                        }
+                    }
+                }
+            }
+            for(var i=0;i<outHeight;i++){
+                tarr[i] = new Array(outWidth);
+                for(var j=0;j<outWidth;j++){
+                    tarr[i][j] = calcMasking_sub(i,j,inImgArr,tempout,mask);
+                    outImgData.data[(i * outWidth + j) * 4 + 0] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 1] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 2] = tarr[i][j];
+                    outImgData.data[(i * outWidth + j) * 4 + 3] = 255;
+                }
+            }
+            ctx_c1.putImageData(outImgData, 0, 0);
+        }
+        function calcMasking(i,j,inarr,temparr){   //inarr의 i,j 위치에서 temparr로 masking 결과
+            var ret = 0;
+            var size = mask.length; // size = 3  5 7 9...
+            var half = Math.floor(size/2);
+            if(half == 0)
+                half += 1;
+            for(var x=-half;x<=half;x++){
+                for(var y=-half;y<=half;y++){
+                    ret += mask[x+half][y+half]*temparr[i+x+half][j+y+half];
+                }
+            }
+            if(ret < 0)
+                ret = 0;
+            else if(ret > 255)
+                ret = 255;
+            else
+                ret = Math.floor(ret);
+            return ret;
+        }
+        function calcMasking_sub(i,j,inarr,temparr){
+            var ret = 0;
+            var size = mask.length;
+            var half = Math.floor(size/2);
+            if(half == 0)
+                half += 1;
+            
+            for(var x=-half;x<=0;x++){
+                for(var y=-half;y<=half;y++){
+                    if(x==-half){
+                        var temp = temparr[i+x+half][j+y+half] - temparr[i+x+half][j-y+half];
+                        temp = Math.abs(temp);
+                        if(ret < temp)
+                            ret = temp;
+                    }else if(x==0){
+                        var temp = temparr[i][j+y+half] - temparr[i][j-y+half];
+                        temp = Math.abs(temp);
+                        if(ret < temp)
+                            ret = temp;
+                        break;
+                    }
+                }
+            }
+            if(ret < 0)
+                ret = 0;
+            else if(ret > 255)
+                ret = 255;
+            else
+                ret = Math.floor(ret);
+            return ret;
+        }
+
+        function imgProcess(selectNum) {
+            var snum = parseInt(selectNum);
+            switch (snum) {
+                case 11: retToOrg();
+                    break;
+                case 12: addImage();
+                    break;
+                case 13: subImage();
+                    break;
+                case 14: b_and_w();
+                    break;
+                case 21: leftmirr();
+                    break;
+                case 22: upmirr();
+                    break;
+                case 23: emph();
+                    break;
+                case 24: shrink();
+                    break;
+                case 25: rotCenter();
+                    break;
+                case 41: his_stretch();
+                    break;
+                case 42: end_in();
+                    break;
+                case 43: normalize();
+                    break;
+                case 44: drawHisChart();
+                    break;
+                case 45: clearHisChart();
+                    break;
+                case 61 : setMaskCustom();
+                    break;
+                case 62 : setEmboMask();
+                    break;
+                case 63 : setSobelMask();
+                    break;
+                case 64 : setblurMask();
+                    break;
+                case 65 : setSharpMask();
+                    break;
+                case 66 : setSubMask();
+                    break;
+
+            }
+        }
+    </script>
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #view {
+            position : relative;
+            height: 100vh;
+            background-color: aqua;
+        }
+
+        #tdiv{
+            position : absolute;
+            width: 100%;
+            height: 30%;
+            bottom: 0;
+            background-color: brown;
+        }
+        #mytable{
+            border: 1px solid;
+
+        }
+
+        #content {
+            width: auto;
+            height: auto;
+            float: left;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+            color: white;
+        }
+
+        canvas {
+            float: left;
+
+        }
+
+        .tab {
+            white-space: pre;
+        }
+
+        .button {
+            border: 1px solid skyblue;
+            background-color: rgba(0, 0, 0, 0);
+            color: skyblue;
+            padding: 5px;
+        }
+
+        .button:hover {
+            color: white;
+            background-color: skyblue;
+        }
+
+        .button2 {
+            border: 1px solid black;
+            background-color: rgba(0, 0, 0, 0);
+            color: black;
+            font-size: large;
+        }
+    </style>
+</head>
+
+<body onload="itit()">
+    <form>
+        <div id="view">
+            <div id="content">
+                <input class='button2' type='file' id='selectfile' onchange='readRawImage()' />
+                <br><br>
+                <center>
+                    <label>영상처리</label>
+                    <select id='selbox' name="imgAlgo" onchange="imgProcess(this.value)">
+                        <option value=0> select option</option>
+                        <optgroup label="화소 점 처리">
+                            <option value=11>original file</option>
+                            <option value=12>밝게하기</option>
+                            <option value=13>어둡게하기</option>
+                            <option value=14>흑백</option>
+                        </optgroup>
+                        <optgroup label="기하학 처리">
+                            <option value=21>좌우반전</option>
+                            <option value=22>상하반전</option>
+                            <option value=23>확대</option>
+                            <option value=24>축소</option>
+                            <option value=25>회전</option>
+                        </optgroup>
+                        <optgroup label="히스토그램">
+                            <option value=41>히스토그램 스트래칭</option>
+                            <option value=42>앤드-인 탐색</option>
+                            <option value=43>평활화</option>
+                            <option value=44>히스토그램 차트</option>
+                            <option value=45>차트지우기</option>
+                        </optgroup>
+                        <optgroup label = "화소 영역처리">
+                            <option value=61>마스크처리(커스텀)</option>
+                            <option value=62>엠보싱마스크</option>
+                            <option value=63>소벨 경계선</option>
+                            <option value=64>블러마스크</option>
+                            <option value=65>샤프마스크</option>
+                            <option value=66>차연산</option>
+                        </optgroup>
+                    </select>
+
+                </center>
+            </div>
+            <canvas id='c1'></canvas>
+            <div id='tdiv'>
+                <button onclick='setMask()'>set values</button>
+            </div>
+        </div>
+        
+    </form>
+
+</body>
+
+</html>
