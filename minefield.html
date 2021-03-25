@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<script>
+    var canvas, ctx_canvas;
+    var canvas2, ctx_canvas2;
+    var minefield, disfield;
+    var mineNum = 0, fieldHeight = 0, fieldWidth = 0;
+    var cntOpenCell=0, cntFlag=0;
+    var cellsize = 60, difficult = 1;
+    var clicklistener, outlistener, movelistener;
+
+    function itit() {   //initiate
+        canvas = document.getElementById("mycan");
+        canvas2 = document.getElementById("mycan2");
+        ctx_canvas = canvas.getContext("2d");
+        ctx_canvas2 = canvas2.getContext("2d");
+        // canvas.addEventListener("mousemove",function(e){move(e)},false);
+        document.addEventListener('contextmenu', function () {
+            event.preventDefault();
+        });
+        reset();
+    }
+    function reset() {   //리셋을 눌렀을때
+        switch (difficult) {  //난이도별로 설정을 바꾼다
+            case 1: setEasy();
+                break;
+            case 2: setMidd();
+                break;
+            case 3: setHard();
+                break;
+            default: ;
+        }
+        cntOpenCell=0;
+        canvas.width = fieldWidth * cellsize;
+        canvas.height = fieldHeight * cellsize;
+        canvas.addEventListener("mousemove", movelistener = function (e) { move(e) }, false);
+        canvas.addEventListener("mouseout", outlistener = function (e) { out(e) }, false);
+        canvas.addEventListener("mousedown", clicklistener = function(e){click(e)}, false);
+        canvas2.width = 0;
+        canvas2.height = 0;
+        minefield = initField(mineNum, fieldHeight, fieldWidth);//지뢰 필드를 새로 만듬
+        disfield = initdisp(fieldHeight, fieldWidth);//보여줄 필드를 새로 만듬
+        drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);//화면에 표시
+        // drawfield(minefield, fieldHeight, fieldWidth, ctx_canvas2);//화면에 표시
+    }
+
+    function setdiff(diffvalue) {    //입력값에 따라 difficult 변수의 값이 바뀜(난이도)
+        difficult = parseInt(diffvalue);
+    }
+    function setEasy() {     //쉬움모드
+        mineNum = 10;
+        fieldHeight = 10;
+        fieldWidth = 8;
+        cellsize = 60;
+    }
+    function setMidd() {
+        mineNum = 40;
+        fieldHeight = 14;
+        fieldWidth = 18;
+        cellsize = 40;
+    }
+    function setHard() {
+        mineNum = 99;
+        fieldHeight = 20;
+        fieldWidth = 24;
+        cellsize = 20;
+    }
+    function initField(mnum, height, width) {    //지뢰필드 새로생성, 9는 지뢰 0은 안전
+        var cnt = 0;
+        var field = new Array(height);
+        for (var i = 0; i < height; i++) {
+            field[i] = new Array(width);
+            for (var j = 0; j < width; j++) {
+                field[i][j] = 0;
+            }
+        }
+        while (cnt < mnum) {
+            for (var i = 0; i < height; i++) {
+                for (var j = 0; j < width; j++) {
+                    if (field[i][j] == 9)
+                        continue;
+                    field[i][j] = parseInt(Math.random() * 10); //0~9
+                    if (field[i][j] == 9 && cnt < mineNum) {
+                        cnt++;
+                        field[i][j] = 9;
+                    } else {
+                        field[i][j] = 0;
+                    }
+                }
+            }
+        }
+        for (var i = 0; i < height; i++) {
+            for (var j = 0; j < width; j++) {
+                field[i][j] = checkAround(field, i, j);
+            }
+        }
+        return field;
+    }
+    function initdisp(height, width) {      //디스플레이 새로생성. 전부 10으로
+        var field = new Array(height);
+        for (var i = 0; i < height; i++) {
+            field[i] = new Array(width);
+            for (var j = 0; j < width; j++) {
+                field[i][j] = 10;
+            }
+        }
+        return field;
+    }
+    function drawfield(field, height, width, ctxIn) {   //display, field를 캔버스에
+        var penh = 0, penw = 0;
+        ctxIn.beginPath();
+
+        ctxIn.strokeStyle = "rgba(255,255,255,1)";
+        var fontval = String(cellsize) + "px malgun gothic"
+        ctxIn.font = fontval;
+        ctxIn.textBaseline = "Middle";
+        for (var i = 0; i < height; i++) {
+            for (var j = 0; j < width; j++) {
+                ctxIn.strokeRect(penw, penh, cellsize, cellsize);
+                if (field[i][j] == 10) {
+                    ctxIn.fillStyle = "rgba(0,0,255,1)";
+                }
+                else {
+                    ctxIn.fillStyle = "rgba(0,0,0,1)";    //글자 색
+                    ctxIn.fillText(field[i][j], penw + cellsize / 4, penh + cellsize * 9 / 10, cellsize);
+                    ctxIn.fillStyle = "rgba(0,0,255,0.5)";      //깨진 블록의 배경
+                }
+
+                ctxIn.fillRect(penw, penh, cellsize, cellsize);
+                penw += cellsize;
+            }
+            penh += cellsize;
+            penw = 0;
+        }
+        if(cntOpenCell == fieldHeight*fieldWidth-mineNum){  //지뢰를 다 찾았음!
+            alert("축하합니다");
+            canvas.removeEventListener("mousedown", clicklistener);
+            canvas.removeEventListener("mousemove", movelistener);
+            canvas.removeEventListener("mouseout", outlistener);
+        }
+    }
+    function move(e) {   //캔버스 안에서 마우스가 움직일 때
+    }
+    function out(e) {    //캔버스 밖으로 마우스가 나갈 때
+        ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
+        drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);
+    }
+    function click(e) {  //마우스 클릭
+        var inx = e.offsetX, iny = e.offsetY;
+        var cellxnum, cellynum;
+        cellxnum = parseInt(inx / cellsize);
+        cellynum = parseInt(iny / cellsize);
+        if ((event.which == 3)) {   //우클릭
+
+        }
+        else {       //좌클릭
+            if (minefield[cellynum][cellxnum] == 9) {   //지뢰일때
+                ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
+            } else if(disfield[cellynum][cellxnum] == 10){        //지뢰가 아닐때
+                // clickBox(cellynum, cellxnum, disfield, minefield, loopflag);
+                disfield[cellynum][cellxnum] = minefield[cellynum][cellxnum];
+                cntOpenCell += 1;
+            }
+        }
+        ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
+        drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);
+    }
+
+    function checkAround(fieldin, inh, inw) {    //field에서 [x][y] 칸 주위의 지뢰 갯수 리턴
+        var cnt = 0, ti, tj;
+        if (fieldin[inh][inw] == 9)
+            return 9;
+
+        if (inh == 0 && inw == 0) {	//왼쪽 위
+            for (ti = inh; ti < inh + 2; ti++) {
+                for (tj = inw; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inh == fieldin.length - 1 && inw == 0) {	//왼쪽 아래
+            for (ti = inh - 1; ti < inh + 1; ti++) {
+                for (tj = inw; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inh == 0 && inw == fieldin[inh].length - 1) {	//오른쪽 위
+            for (ti = inh; ti < inh + 2; ti++) {
+                for (tj = inw - 1; tj < inw + 1; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inh == fieldin.length - 1 && inw == fieldin[inw].length - 1) {	//오른쪽 아래
+            for (ti = inh - 1; ti < inh + 1; ti++) {
+                for (tj = inw - 1; tj < inw + 1; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inh == 0) {	//위
+            for (ti = inh; ti < inh + 2; ti++) {
+                for (tj = inw - 1; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inh == fieldin.length - 1) {	//아래
+            for (ti = inh - 1; ti < inh + 1; ti++) {
+                for (tj = inw - 1; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inw == 0) {	//왼쪽
+            for (ti = inh - 1; ti < inh + 2; ti++) {
+                for (tj = inw; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else if (inw == fieldin[inh].length - 1) {		//오른쪽
+            for (ti = inh - 1; ti < inh + 2; ti++) {
+                for (tj = inw - 1; tj < inw + 1; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        } else {	//안쪽
+            for (ti = inh - 1; ti < inh + 2; ti++) {
+                for (tj = inw - 1; tj < inw + 2; tj++) {
+                    if (ti != inh || tj != inw) {
+                        if (fieldin[ti][tj] == 9)
+                            cnt++;
+                    }
+                }
+            }
+        }
+        return cnt;
+    }
+</script>
+<!-- 추가할 기능
+    마우스 클릭 이벤트(왼쪽/오른쪽)
+ -->
+
+<style>
+    body {
+        margin: 0px;
+        padding: 0px;
+
+    }
+
+    #back {
+        height: 100vh;
+        width: auto;
+        position: relative;
+    }
+
+    #back :after {
+        background-image: url('/media/green.jfif');
+        top: 0;
+        left: 0;
+        position: absolute;
+        background-size: cover;
+        opacity: 0.3 !important;
+        filter: alpha(opacity=50);
+        z-index: -1;
+        content: "";
+        width: 100%;
+        height: 100%;
+    }
+
+    #canvasdiv {
+        margin-top: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #canvasdiv {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #in {
+        width: 100%;
+        height: auto;
+        background-color: rgba(0, 0, 0, 0);
+    }
+
+    #reset {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        height: 50px;
+    }
+</style>
+
+<body onload="itit()">
+    <div id="back">
+        <select id='difficulty' name='ease' onchange="setdiff(this.value)">
+            <option value=0>난이도 설정</option>
+            <option value=1>easy</option>
+            <option value=2>middle</option>
+            <option value=3>hard</option>
+        </select>
+        <div id="in">
+            <button type="button" id="reset" onclick="reset()">reset</button>
+        </div>
+        <div id="canvasdiv">
+            <canvas id="mycan"></canvas>
+        </div>
+        <div id="canvasdiv2">
+            <canvas id="mycan2"></canvas>
+        </div>
+    </div>
+</body>
+
+</html>
