@@ -5,18 +5,21 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>지뢰찾기~</title>
 </head>
 <script>
     var canvas, ctx_canvas;
     var canvas2, ctx_canvas2;
     var minefield, disfield;
     var mineNum = 0, fieldHeight = 0, fieldWidth = 0;
-    var cntOpenCell=0, cntFlag=0;
+    var cntOpenCell = 0, dieflag = false, winmine = false;
     var cellsize = 60, difficult = 1;
     var clicklistener, outlistener, movelistener;
+    var canvasdiv;
+    var starttime, endtime,score;
 
     function itit() {   //initiate
+        canvasdiv = document.getElementById("canvasdiv");
         canvas = document.getElementById("mycan");
         canvas2 = document.getElementById("mycan2");
         ctx_canvas = canvas.getContext("2d");
@@ -37,20 +40,38 @@
                 break;
             default: ;
         }
-        cntOpenCell=0;
+        if (canvasdiv.children.length > 1)
+            canvasdiv.removeChild(canvas2);
+        dieflag = false;    //죽지 않았다
+        winmine = false;    //승리플래그
+        cntOpenCell = 0;
         canvas.width = fieldWidth * cellsize;
         canvas.height = fieldHeight * cellsize;
+        canvas2.width = fieldWidth * cellsize;
+        canvas2.height = fieldHeight * cellsize;
         canvas.addEventListener("mousemove", movelistener = function (e) { move(e) }, false);
         canvas.addEventListener("mouseout", outlistener = function (e) { out(e) }, false);
-        canvas.addEventListener("mousedown", clicklistener = function(e){click(e)}, false);
-        canvas2.width = 0;
-        canvas2.height = 0;
+        canvas.addEventListener("mousedown", clicklistener = function (e) { click(e) }, false);
+
+        var fontval = String(cellsize) + "px malgun gothic"
+        ctx_canvas.font = fontval;
+        ctx_canvas.textBaseline = "Middle";
+        ctx_canvas2.font = fontval;
+        ctx_canvas2.textBaseline = "Middle";
+        starttime = new Date();
+
+
         minefield = initField(mineNum, fieldHeight, fieldWidth);//지뢰 필드를 새로 만듬
         disfield = initdisp(fieldHeight, fieldWidth);//보여줄 필드를 새로 만듬
         drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);//화면에 표시
         // drawfield(minefield, fieldHeight, fieldWidth, ctx_canvas2);//화면에 표시
     }
-
+    function dieEvent() {
+        alert("실패!");
+        canvas.removeEventListener("mousedown", clicklistener, false);
+        canvas.removeEventListener("mousemove", movelistener, false);
+        canvas.removeEventListener("mouseout", outlistener, false);
+    }
     function setdiff(diffvalue) {    //입력값에 따라 difficult 변수의 값이 바뀜(난이도)
         difficult = parseInt(diffvalue);
     }
@@ -64,73 +85,95 @@
         mineNum = 40;
         fieldHeight = 14;
         fieldWidth = 18;
-        cellsize = 40;
+        cellsize = 50;
     }
     function setHard() {
         mineNum = 99;
         fieldHeight = 20;
         fieldWidth = 24;
-        cellsize = 20;
+        cellsize = 30;
     }
     function initField(mnum, height, width) {    //지뢰필드 새로생성, 9는 지뢰 0은 안전
         var cnt = 0;
-        var field = new Array(height);
+        var newfield = new Array(height);
         for (var i = 0; i < height; i++) {
-            field[i] = new Array(width);
+            newfield[i] = new Array(width);
             for (var j = 0; j < width; j++) {
-                field[i][j] = 0;
+                newfield[i][j] = 0;
             }
         }
         while (cnt < mnum) {
             for (var i = 0; i < height; i++) {
                 for (var j = 0; j < width; j++) {
-                    if (field[i][j] == 9)
+                    if (newfield[i][j] == 9)
                         continue;
-                    field[i][j] = parseInt(Math.random() * 10); //0~9
-                    if (field[i][j] == 9 && cnt < mineNum) {
+                    newfield[i][j] = parseInt(Math.random() * 10); //0~9
+                    if (newfield[i][j] == 9 && cnt < mineNum) {
                         cnt++;
-                        field[i][j] = 9;
+                        newfield[i][j] = 9;
                     } else {
-                        field[i][j] = 0;
+                        newfield[i][j] = 0;
                     }
                 }
             }
         }
         for (var i = 0; i < height; i++) {
             for (var j = 0; j < width; j++) {
-                field[i][j] = checkAround(field, i, j);
+                // if(i == height-2 && j == width-2)
+                newfield[i][j] = checkAround(newfield, i, j);
             }
         }
-        return field;
+        return newfield;
     }
     function initdisp(height, width) {      //디스플레이 새로생성. 전부 10으로
-        var field = new Array(height);
+        var newdisfield = new Array(height);
         for (var i = 0; i < height; i++) {
-            field[i] = new Array(width);
+            newdisfield[i] = new Array(width);
             for (var j = 0; j < width; j++) {
-                field[i][j] = 10;
+                newdisfield[i][j] = 10;
             }
         }
-        return field;
+        return newdisfield;
     }
-    function drawfield(field, height, width, ctxIn) {   //display, field를 캔버스에
-        var penh = 0, penw = 0;
+    function drawfield(fieldin, height, width, ctxIn) {   //display, field를 캔버스에
+        var penh = 0, penw = 0; //드로잉 할 위치
         ctxIn.beginPath();
 
         ctxIn.strokeStyle = "rgba(255,255,255,1)";
-        var fontval = String(cellsize) + "px malgun gothic"
-        ctxIn.font = fontval;
-        ctxIn.textBaseline = "Middle";
+
         for (var i = 0; i < height; i++) {
             for (var j = 0; j < width; j++) {
-                ctxIn.strokeRect(penw, penh, cellsize, cellsize);
-                if (field[i][j] == 10) {
-                    ctxIn.fillStyle = "rgba(0,0,255,1)";
+                ctxIn.strokeRect(penw, penh, cellsize, cellsize);   //테두리선
+                if (fieldin[i][j] == 10) {
+                    ctxIn.fillStyle = "rgba(0,0,255,1)";    //클릭 안한 블록
                 }
                 else {
-                    ctxIn.fillStyle = "rgba(0,0,0,1)";    //글자 색
-                    ctxIn.fillText(field[i][j], penw + cellsize / 4, penh + cellsize * 9 / 10, cellsize);
-                    ctxIn.fillStyle = "rgba(0,0,255,0.5)";      //깨진 블록의 배경
+                    switch (fieldin[i][j]) {
+                        case 1: ctxIn.fillStyle = "#0000FF";    //글자 색
+                            break;
+                        case 2: ctxIn.fillStyle = "#FF0000";    //글자 색
+                            break;
+                        case 3: ctxIn.fillStyle = "#FF8000";    //글자 색
+                            break;
+                        case 4: ctxIn.fillStyle = "#FFFF00";    //글자 색
+                            break;
+                        case 5: ctxIn.fillStyle = "#40FF00";    //글자 색
+                            break;
+                        case 6: ctxIn.fillStyle = "#A901DB";    //글자 색
+                            break;
+                        case 7: ctxIn.fillStyle = "#0B0B61";    //글자 색
+                            break;
+                        case 8: ctxIn.fillStyle = "#FA58F4";    //글자 색
+                            break;
+                        case 9: ctxIn.fillStyle = "rgba(0,0,0,1)";    //지뢰일때
+                            break;
+                        default: ctxIn.fillStyle = "#00BFFF";
+                            break;
+                    }
+
+
+                    ctxIn.fillText(fieldin[i][j], penw + cellsize / 4, penh + cellsize * 9 / 10, cellsize);
+                    ctxIn.fillStyle = "rgba(0,0,255,0.4)";      //깨진 블록의 색
                 }
 
                 ctxIn.fillRect(penw, penh, cellsize, cellsize);
@@ -139,31 +182,57 @@
             penh += cellsize;
             penw = 0;
         }
-        if(cntOpenCell == fieldHeight*fieldWidth-mineNum){  //지뢰를 다 찾았음!
-            alert("축하합니다");
-            canvas.removeEventListener("mousedown", clicklistener);
-            canvas.removeEventListener("mousemove", movelistener);
-            canvas.removeEventListener("mouseout", outlistener);
+        ctxIn.closePath();
+
+    }
+    function drawcell(fieldin, inh, inw, ctxIn) {   //해당 칸만 draw
+
+        if (fieldin[inh][inw] == 10) {    //클릭 안한 블록만
+            ctxIn.fillStyle = "rgba(255,0,0,1)"; //색상 지정
+            ctxIn.clearRect(inw * cellsize, inh * cellsize, cellsize, cellsize);
+            ctxIn.fillRect(inw * cellsize, inh * cellsize, cellsize, cellsize);   //해당칸 다시그림
         }
     }
     function move(e) {   //캔버스 안에서 마우스가 움직일 때
+        if (dieflag == true || winmine == true) {
+            // alert("still move");
+            return;
+        }
+        var inx = e.offsetX, iny = e.offsetY;
+        var cellxnum, cellynum;
+
+        cellxnum = parseInt(inx / cellsize);
+        cellynum = parseInt(iny / cellsize);
+
+        ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
+        drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);
+        drawcell(disfield, cellynum, cellxnum, ctx_canvas);
     }
     function out(e) {    //캔버스 밖으로 마우스가 나갈 때
-        ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
+        if (dieflag == true || winmine == true) {
+            // alert("still out");
+            return;
+        }
+        ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);    //mouse move event로 바뀐 그림 다시 돌려놓기
         drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);
     }
     function click(e) {  //마우스 클릭
+        if (dieflag == true || winmine == true) {
+            // alert("still click");
+            return;
+        }
         var inx = e.offsetX, iny = e.offsetY;
         var cellxnum, cellynum;
-        cellxnum = parseInt(inx / cellsize);
-        cellynum = parseInt(iny / cellsize);
+        cellxnum = parseInt(inx / cellsize);    //width
+        cellynum = parseInt(iny / cellsize);    //height
         if ((event.which == 3)) {   //우클릭
 
         }
         else {       //좌클릭
-            if (minefield[cellynum][cellxnum] == 9) {   //지뢰일때
-                ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
-            } else if(disfield[cellynum][cellxnum] == 10){        //지뢰가 아닐때
+            if (minefield[cellynum][cellxnum] == 9) {   //지뢰일때, 다이!
+                dieflag = true;
+                dieEvent();
+            } else if (disfield[cellynum][cellxnum] == 10) {        //지뢰가 아닐때
                 // clickBox(cellynum, cellxnum, disfield, minefield, loopflag);
                 disfield[cellynum][cellxnum] = minefield[cellynum][cellxnum];
                 cntOpenCell += 1;
@@ -171,8 +240,124 @@
         }
         ctx_canvas.clearRect(0, 0, canvas.width, canvas.height);
         drawfield(disfield, fieldHeight, fieldWidth, ctx_canvas);
+        if (cntOpenCell == fieldHeight * fieldWidth - mineNum) {  //지뢰를 다 찾았음!
+            wingame();
+        }
     }
+    function click2(e) {     //다른그림 찾기를 할 때 클릭이벤트
 
+    }
+    function wingame() { //지뢰찾기를 승리했을 경우
+        endtime = new Date();
+        score = parseInt((endtime.getTime() - starttime.getTime())/1000);
+        // canvasdiv.appendChild(canvas2);
+        winmine = true;
+        alert("you win! \nyour score is "+score+"sec");
+        canvas.removeEventListener("mousedown", clicklistener, false);
+        canvas.removeEventListener("mousemove", movelistener, false);
+        canvas.removeEventListener("mouseout", outlistener, false);
+        //canvas2.addEventListener("mousedown",)
+        // drawdiff();
+    }
+    function drawdiff() {       //다른그림을 오른쪽 캔버스에 그리기
+        var canwid = canvas.width, canhei = canvas.height;  //캔버스의 너비/높이
+        var disfield2 = new Array(fieldHeight);
+        for (var i = 0; i < fieldHeight; i++) { //오른쪽 캔버스에 그릴 필드 배열
+            disfield2[i] = new Array(fieldWidth);
+            for (var j = 0; j < fieldWidth; j++) {
+                disfield2[i][j] = disfield[i][j];
+            }
+        }
+        for (var i = 0; i < 12; i++) {  //셀정보 12번 바꾸기
+            disfield2[parseInt(Math.random() * fieldHeight)][parseInt(Math.random() * fieldWidth)]
+                = parseInt(Math.random() * 10);
+        }
+        //왼쪽 캔버스 이미지 데이터 받기
+        drawfield(disfield2, fieldHeight, fieldWidth, ctx_canvas2);
+        var imgData = ctx_canvas2.getImageData(0, 0, canwid, canhei);
+        ctx_canvas2.clearRect(0, 0, canwid, canhei);
+        var inImgArr = new Array(4);
+        for (var i = 0; i < 4; i++) {
+            inImgArr[i] = new Array(canhei);
+            for (var j = 0; j < canhei; j++) {
+                inImgArr[i][j] = new Array(canwid);
+            }
+        }
+        var R, G, B, opc;
+        for (var i = 0; i < canhei; i++) {
+            for (var j = 0; j < canwid; j++) {
+                px = (i*canwid+j)*4;
+                R = imgData.data[px + 0];
+                G = imgData.data[px + 1];
+                B = imgData.data[px + 2];
+                opc = imgData.data[px + 3];
+                inImgArr[0][i][j] = String.fromCharCode(R);
+                inImgArr[1][i][j] = String.fromCharCode(G);
+                inImgArr[2][i][j] = String.fromCharCode(B);
+                inImgArr[3][i][j] = String.fromCharCode(opc);
+            }
+        }
+        draw_field2(inImgArr,ctx_canvas2,canhei,canwid)
+    }
+    function draw_field2(Inarr, ctxIn,chei,cwid){
+        var outImgArr = new Array(4);
+        var tarr = new Array(4);
+        var ohei,owid;
+        var r,g,b,topc;
+        //tarr = 좌우반전된 이미지 데이터
+        for (var i = 0; i < 4; i++) {
+            tarr[i] = new Array(chei);
+            for (var j = 0; j < chei; j++) {
+                tarr[i][j] = new Array(cwid);
+                for(var k=0;k<cwid;k++){
+                    tarr[i][j][k] = Inarr[i][j][cwid-1-k];
+                }
+            }
+        }       
+        
+        var temph,tempw;
+        var rad = Math.PI*Math.random()/2;  //회전각도
+        var alpha = Math.atan2(cwid, chei); //alpha = radian value
+        var beta = Math.sqrt(chei * chei + cwid * cwid);    //빗변길이
+        var ohei = parseInt(beta * Math.abs(Math.sin(rad + alpha)));  //새로운높이
+        var owid = parseInt(Math.abs(chei * Math.sin(rad) + cwid * Math.cos(rad)));    //새로운너비
+        //out에 회전시킨 이미지 넣기
+        for (var i = 0; i < 4; i++) {
+            outImgArr[i] = new Array(ohei);
+            for (var j = 0; j < ohei; j++) {
+                outImgArr[i][j] = new Array(owid);
+                for(var k=0;k<owid;k++){
+                    temph = parseInt(Math.cos(rad) * (j-(ohei/2)) - Math.sin(rad) * (k-(owid/2)) + chei/2);
+                    tempw = parseInt(Math.sin(rad) * (j-(ohei/2)) + Math.cos(rad) * (k-(owid/2)) + cwid/2);
+                    
+                    if((0<=temph && temph<chei) && (0<=tempw && tempw<cwid))
+                        outImgArr[i][j][k] = tarr[i][temph][tempw];
+                    else{
+                        // if(i==3)
+                        //     outImgArr[i][j][k] = String.fromCharCode(0);
+                        outImgArr[i][j][k] = String.fromCharCode(0);
+                    }
+                }
+            }
+        }
+        canvas2.width = owid;
+        canvas2.height=ohei;
+
+        var outImgData = ctx_canvas2.createImageData(ohei,owid);
+        for(var i=0;i<ohei;i++){
+                for(var j=0;j<owid;j++){
+                    r = outImgArr[0][i][j].charCodeAt(0);
+                    g = outImgArr[1][i][j].charCodeAt(0);
+                    b = outImgArr[2][i][j].charCodeAt(0);
+                    topc = outImgArr[3][i][j].charCodeAt(0);
+                    outImgData.data[(i * owid + j) * 4 + 0] = r;
+                    outImgData.data[(i * owid + j) * 4 + 1] = g;
+                    outImgData.data[(i * owid + j) * 4 + 2] = b;
+                    outImgData.data[(i * owid + j) * 4 + 3] = topc;
+                }
+            }
+            ctxIn.putImageData(outImgData, 0, 0);
+    }
     function checkAround(fieldin, inh, inw) {    //field에서 [x][y] 칸 주위의 지뢰 갯수 리턴
         var cnt = 0, ti, tj;
         if (fieldin[inh][inw] == 9)
@@ -205,7 +390,7 @@
                     }
                 }
             }
-        } else if (inh == fieldin.length - 1 && inw == fieldin[inw].length - 1) {	//오른쪽 아래
+        } else if (inh == fieldin.length - 1 && inw == fieldin[inh].length - 1) {	//오른쪽 아래
             for (ti = inh - 1; ti < inh + 1; ti++) {
                 for (tj = inw - 1; tj < inw + 1; tj++) {
                     if (ti != inh || tj != inw) {
@@ -263,10 +448,6 @@
         return cnt;
     }
 </script>
-<!-- 추가할 기능
-    마우스 클릭 이벤트(왼쪽/오른쪽)
- -->
-
 <style>
     body {
         margin: 0px;
@@ -298,14 +479,9 @@
         margin-top: 30px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-around;
     }
-    #canvasdiv {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+
 
     #in {
         width: 100%;
@@ -331,11 +507,10 @@
         </select>
         <div id="in">
             <button type="button" id="reset" onclick="reset()">reset</button>
+            <button type="button" id="win" onclick="wingame()">win</button>
         </div>
         <div id="canvasdiv">
             <canvas id="mycan"></canvas>
-        </div>
-        <div id="canvasdiv2">
             <canvas id="mycan2"></canvas>
         </div>
     </div>
